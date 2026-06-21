@@ -1,0 +1,53 @@
+{
+  "name": "aroundjos",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "supabase:types": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.ts"
+  },
+  "dependencies": {
+    "next": "15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.6.3",
+    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.5.1",
+    "cloudinary": "^2.5.1",
+    "next-cloudinary": "^6.13.0",
+    "mapbox-gl": "^3.7.0",
+    "react-map-gl": "^7.1.7",
+    "react-hot-toast": "^2.4.1",
+    "react-hook-form": "^7.53.2",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.9.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.460.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4",
+    "next-themes": "^0.4.3",
+    "framer-motion": "^11.11.11",
+    "slugify": "^1.6.6",
+    "react-dropzone": "^14.3.5",
+    "uuid": "^10.0.0",
+    "@vercel/analytics": "^1.3.1",
+    "@vercel/speed-insights": "^1.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/mapbox-gl": "^3.4.0",
+    "supabase": "^1.202.2",
+    "tailwindcss": "^3.4.14",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "15.0.3"
+  }
+}
