@@ -8,14 +8,15 @@ import { ListingCard } from '@/components/listings/ListingCard';
 import { SectionHeader, EmptyState, Badge } from '@/components/ui';
 import { Button } from '@/components/ui';
 
-interface Props { params: { slug: string } }
+interface Props { params: Promise<{ slug: string }> }
 
 export async function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cat = getCategoryBySlug(params.slug);
+  const { slug } = await params;
+  const cat = getCategoryBySlug(slug);
   if (!cat) return { title: 'Category Not Found' };
   return {
     title:       `${cat.name} in Jos — AroundJos`,
@@ -24,10 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const category = getCategoryBySlug(params.slug);
+  const { slug } = await params;
+  const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const listings = await getListingsByCategory(params.slug, 24).catch(() => []);
+  const listings = await getListingsByCategory(slug, 24).catch(() => []);
 
   return (
     <div className="page-top">
@@ -117,7 +119,7 @@ export default async function CategoryPage({ params }: Props) {
       <div className="container-app pb-10">
         <SectionHeader title="Other Categories" />
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.filter((c) => c.slug !== params.slug).map((cat) => (
+          {CATEGORIES.filter((c) => c.slug !== slug).map((cat) => (
             <Link
               key={cat.slug}
               href={`/category/${cat.slug}`}

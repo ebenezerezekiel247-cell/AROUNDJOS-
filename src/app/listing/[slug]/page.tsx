@@ -14,11 +14,12 @@ import { ListingImageGallery } from '@/components/listings/ListingImageGallery';
 import { getWhatsAppLink, getPhoneLink, formatNumber, getPriceLabel, isOpenNow } from '@/utils';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const listing = await getListingBySlug(params.slug).catch(() => null);
+  const { slug } = await params;
+  const listing = await getListingBySlug(slug).catch(() => null);
   if (!listing) return { title: 'Business Not Found' };
 
   return {
@@ -33,7 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ListingPage({ params }: Props) {
-  const listing = await getListingBySlug(params.slug).catch(() => null);
+  const { slug } = await params;
+  const listing = await getListingBySlug(slug).catch(() => null);
   if (!listing) notFound();
 
   // Reviews are linked by listing.id (UUID), not the slug
