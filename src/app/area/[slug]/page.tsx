@@ -7,7 +7,6 @@ import { JOS_AREAS } from '@/types';
 import { ListingCard } from '@/components/listings/ListingCard';
 import { EmptyState, Button } from '@/components/ui';
 
-// Next.js 15: params is now a Promise
 interface Props { params: Promise<{ slug: string }> }
 
 function slugToArea(slug: string): string {
@@ -39,6 +38,7 @@ export default async function AreaPage({ params }: Props) {
 
   return (
     <div className="page-top">
+      {/* Header */}
       <div className="bg-gradient-to-br from-plateau-900 via-plateau-800 to-plateau-700 py-14">
         <div className="container-app">
           <nav className="flex items-center gap-1 text-xs text-white/50 mb-6">
@@ -58,6 +58,7 @@ export default async function AreaPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Listings */}
       <div className="container-app section">
         {listings.length === 0 ? (
           <EmptyState icon="📍" title={`Nothing in ${area} yet`} message="Be the first to add a business here!"
@@ -69,6 +70,7 @@ export default async function AreaPage({ params }: Props) {
         )}
       </div>
 
+      {/* Other areas */}
       <div className="container-app pb-10">
         <h2 className="font-display font-bold text-lg text-surface-900 dark:text-white mb-4">Other Areas in Jos</h2>
         <div className="flex flex-wrap gap-2">
