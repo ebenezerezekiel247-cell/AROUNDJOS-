@@ -3,7 +3,8 @@ import type { DbListing } from '@/types/database';
 import type { SearchFilters } from '@/types';
 import slugify from 'slugify';
 
-const db = () => getSupabaseClient();
+// Shorthand — cast to any for all mutations to avoid Supabase strict-mode never[] issue
+const db = () => getSupabaseClient() as any;
 
 // ─── Public Type (camelCase — matches what UI components expect) ─────────────
 export interface Listing {
@@ -44,7 +45,6 @@ export interface Listing {
   updatedAt: string;
 }
 
-// ─── Transformer: DB row (snake_case) → UI shape (camelCase) ──────────────────
 function toListing(row: DbListing): Listing {
   return {
     id: row.id,
@@ -85,45 +85,94 @@ function toListing(row: DbListing): Listing {
   };
 }
 
-// ─── Create Listing ───────────────────────────────────────────────────────────
-// Accepts snake_case insert payload (matches DB columns directly — used by add-listing form)
-export async function createListing(
-  data: Record<string, any>,
-  userId: string
-): Promise<string> {
+// ─── Create ───────────────────────────────────────────────────────────────────
+export async function createListing(data: Record<string, any>, userId: string): Promise<string> {
   const slug = await generateUniqueSlug(data.business_name);
-
   const { data: listing, error } = await db()
     .from('listings')
     .insert({ ...data, slug, created_by: userId, status: 'pending' })
     .select('id')
     .single();
-
   if (error) throw error;
   return listing.id;
 }
 
-// ─── Get by slug ──────────────────────────────────────────────────────────────
+// ─── Read ─────────────────────────────────────────────────────────────────────
 export async function getListingBySlug(slug: string): Promise<Listing | null> {
-  const { data, error } = await db()
-    .from('listings')
-    .select('*')
-    .eq('slug', slug)
-    .eq('status', 'active')
-    .single();
-
+  const { data, error } = await db().from('listings').select('*').eq('slug', slug).eq('status', 'active').single();
   if (error || !data) return null;
   return toListing(data);
 }
 
-// ─── Get by ID ────────────────────────────────────────────────────────────────
 export async function getListingById(id: string): Promise<Listing | null> {
   const { data, error } = await db().from('listings').select('*').eq('id', id).single();
   if (error || !data) return null;
   return toListing(data);
 }
 
-// ─── Update / Delete ───────────────────────────────────────────────────────────
+export async function getFeaturedListings(count = 8): Promise<Listing[]> {
+  const { data, error } = await db().from('listings').select('*').eq('status', 'active').eq('featured', true).order('rating_average', { ascending: false }).limit(count);
+  if (error) throw error;
+  return (data || []).map(toListing);
+}
+
+export async function getTrendingListings(count = 8): Promise<Listing[]> {
+  const { data, error } = await db().from('listings').select('*').eq('status', 'active').order('view_count', { ascending: false }).limit(count);
+  if (error) throw error;
+  return (data || []).map(toListing);
+}
+
+export async function getRecentListings(count = 8): Promise<Listing[]> {
+  const { data, error } = await db().from('listings').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(count);
+  if (error) throw error;
+  return (data || []).map(toListing);
+}
+
+export async function getListingsByCategory(categorySlug: string, count = 24): Promise<Listing[]> {
+  const { data, error } = await db().from('listings').select('*').eq('status', 'active').eq('category_slug', categorySlug).order('rating_average', { ascending: false }).limit(count);
+  if (error) throw error;
+  return (data || []).map(toListing);
+}
+
+export async function getListingsByArea(area: string, count = 24): Promise<Listing[]> {
+  const { data, error } = await db().from('listings').select('*').eq('status', 'active').eq('area', area).order('rating_average', { ascending: false }).limit(count);
+  if (error) throw error;
+  return (data || []).map(toListing);
+}
+
+export async function getListings(options: { status?: string; limit?: number } = {}): Promise<{ listings: Listing[] }> {
+  const { data, error } = await db().from('listings').select('*').eq('status', options.status || 'active').order('created_at', { ascending: false }).limit(options.limit || 100);
+  if (error) throw error;
+  return { listings: (data || []).map(toListing) };
+}
+
+export async function searchListings(filters: SearchFilters): Promise<Listing[]> {
+  let query = db().from('listings').select('*').eq('status', 'active');
+  if (filters.category) query = query.eq('category_slug', filters.category);
+  if (filters.area)     query = query.eq('area', filters.area);
+  if (filters.rating)   query = query.gte('rating_average', filters.rating);
+  if (filters.verified) query = query.eq('verified', true);
+  if (filters.featured) query = query.eq('featured', true);
+  query = query.order('rating_average', { ascending: false }).limit(50);
+  const { data, error } = await query;
+  if (error || !data) {
+    const { data: fallback } = await db().from('listings').select('*').eq('status', 'active').ilike('business_name', `%${filters.query || ''}%`).limit(50);
+    return (fallback || []).map(toListing);
+  }
+  let results = data.map(toListing);
+  if (filters.query) {
+    const q = filters.query.toLowerCase();
+    results = results.filter((l: Listing) =>
+      l.businessName.toLowerCase().includes(q) ||
+      l.description.toLowerCase().includes(q) ||
+      l.address.toLowerCase().includes(q) ||
+      l.area.toLowerCase().includes(q)
+    );
+  }
+  return results;
+}
+
+// ─── Update / Delete ──────────────────────────────────────────────────────────
 export async function updateListing(id: string, data: Record<string, any>): Promise<void> {
   const { error } = await db().from('listings').update({ ...data, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
@@ -134,98 +183,6 @@ export async function deleteListing(id: string): Promise<void> {
   if (error) throw error;
 }
 
-// ─── Featured / Trending / Recent ──────────────────────────────────────────────
-export async function getFeaturedListings(count = 8): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*').eq('status', 'active').eq('featured', true)
-    .order('rating_average', { ascending: false }).limit(count);
-  if (error) throw error;
-  return (data || []).map(toListing);
-}
-
-export async function getTrendingListings(count = 8): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*').eq('status', 'active')
-    .order('view_count', { ascending: false }).limit(count);
-  if (error) throw error;
-  return (data || []).map(toListing);
-}
-
-export async function getRecentListings(count = 8): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*').eq('status', 'active')
-    .order('created_at', { ascending: false }).limit(count);
-  if (error) throw error;
-  return (data || []).map(toListing);
-}
-
-// ─── By Category / Area ────────────────────────────────────────────────────────
-export async function getListingsByCategory(categorySlug: string, count = 24): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*').eq('status', 'active').eq('category_slug', categorySlug)
-    .order('rating_average', { ascending: false }).limit(count);
-  if (error) throw error;
-  return (data || []).map(toListing);
-}
-
-export async function getListingsByArea(area: string, count = 24): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*').eq('status', 'active').eq('area', area)
-    .order('rating_average', { ascending: false }).limit(count);
-  if (error) throw error;
-  return (data || []).map(toListing);
-}
-
-// ─── Generic listings fetch (used by map page) ─────────────────────────────────
-export async function getListings(options: {
-  status?: string;
-  limit?: number;
-} = {}): Promise<{ listings: Listing[] }> {
-  const { data, error } = await db()
-    .from('listings')
-    .select('*')
-    .eq('status', options.status || 'active')
-    .order('created_at', { ascending: false })
-    .limit(options.limit || 100);
-  if (error) throw error;
-  return { listings: (data || []).map(toListing) };
-}
-
-// ─── Search ───────────────────────────────────────────────────────────────────
-export async function searchListings(filters: SearchFilters): Promise<Listing[]> {
-  let query = db().from('listings').select('*').eq('status', 'active');
-
-  if (filters.category) query = query.eq('category_slug', filters.category);
-  if (filters.area)     query = query.eq('area', filters.area);
-  if (filters.rating)   query = query.gte('rating_average', filters.rating);
-  if (filters.verified) query = query.eq('verified', true);
-  if (filters.featured) query = query.eq('featured', true);
-
-  query = query.order('rating_average', { ascending: false }).limit(50);
-
-  const { data, error } = await query;
-  if (error || !data) {
-    const { data: fallback } = await db()
-      .from('listings').select('*').eq('status', 'active')
-      .ilike('business_name', `%${filters.query || ''}%`).limit(50);
-    return (fallback || []).map(toListing);
-  }
-
-  let results = data.map(toListing);
-  if (filters.query) {
-    const q = filters.query.toLowerCase();
-    results = results.filter(
-      (l) =>
-        l.businessName.toLowerCase().includes(q) ||
-        l.description.toLowerCase().includes(q) ||
-        l.address.toLowerCase().includes(q) ||
-        l.area.toLowerCase().includes(q)
-    );
-  }
-  return results;
-}
-
-// ─── View count ───────────────────────────────────────────────────────────────
 export async function incrementViewCount(id: string): Promise<void> {
   const { data } = await db().from('listings').select('view_count').eq('id', id).single();
   if (!data) return;
@@ -244,19 +201,14 @@ export async function removeFavorite(userId: string, listingId: string): Promise
 }
 
 export async function getUserFavorites(userId: string): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('favorites').select('listing_id, listings(*)').eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const { data, error } = await db().from('favorites').select('listing_id, listings(*)').eq('user_id', userId).order('created_at', { ascending: false });
   if (error) throw error;
   return (data?.map((f: any) => f.listings).filter(Boolean) || []).map(toListing);
 }
 
-// ─── Owner / Admin ──────────────────────────────────────────────────────────────
+// ─── Owner / Admin ────────────────────────────────────────────────────────────
 export async function getOwnerListings(ownerId: string): Promise<Listing[]> {
-  const { data, error } = await db()
-    .from('listings').select('*')
-    .or(`created_by.eq.${ownerId},owner_id.eq.${ownerId}`)
-    .order('created_at', { ascending: false });
+  const { data, error } = await db().from('listings').select('*').or(`created_by.eq.${ownerId},owner_id.eq.${ownerId}`).order('created_at', { ascending: false });
   if (error) throw error;
   return (data || []).map(toListing);
 }
@@ -269,20 +221,17 @@ export async function getAdminListings(status?: string): Promise<Listing[]> {
   return (data || []).map(toListing);
 }
 
-export async function setListingStatus(
-  id: string,
-  status: 'active' | 'rejected' | 'pending' | 'suspended'
-): Promise<void> {
+export async function setListingStatus(id: string, status: 'active' | 'rejected' | 'pending' | 'suspended'): Promise<void> {
   const { error } = await db().from('listings').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
 }
 
-// ─── Slug helper ──────────────────────────────────────────────────────────────
+// ─── Slug Helper ──────────────────────────────────────────────────────────────
 async function generateUniqueSlug(name: string): Promise<string> {
   const base = slugify(name, { lower: true, strict: true });
   const { data } = await db().from('listings').select('slug').like('slug', `${base}%`).limit(20);
   if (!data?.length) return base;
-  const existing = data.map((r) => r.slug);
+  const existing = data.map((r: any) => r.slug);
   let counter = 1;
   let candidate = `${base}-${counter}`;
   while (existing.includes(candidate)) { counter++; candidate = `${base}-${counter}`; }

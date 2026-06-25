@@ -6,7 +6,7 @@ import { getFeaturedListings, getTrendingListings, getRecentListings } from '@/s
 import { FEATURED_CATEGORIES } from '@/services/categories';
 import { SEED_AREAS } from '@/data/seed';
 import { ListingCard, CategoryCard } from '@/components/listings/ListingCard';
-import { CardSkeleton, SectionHeader } from '@/components/ui';
+import { CardSkeleton, SectionHeader, RawCategoryIcon } from '@/components/ui';
 import { HeroSearch } from '@/components/search/HeroSearch';
 import { AreaCard, SponsoredBanner } from '@/components/listings/AreaCard';
 
@@ -113,7 +113,7 @@ export default function HomePage() {
                 href={`/category/${cat.slug}`}
                 className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors backdrop-blur-sm"
               >
-                <span>{cat.icon}</span>
+                <RawCategoryIcon name={cat.icon} color="#fff" size={14} />
                 {cat.name}
               </Link>
             ))}

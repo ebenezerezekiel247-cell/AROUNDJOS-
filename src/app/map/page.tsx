@@ -64,9 +64,8 @@ export default function MapPage() {
       const el  = document.createElement('div');
       el.className = 'cursor-pointer';
       el.innerHTML = `
-        <div class="w-9 h-9 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-base transition-transform hover:scale-110"
-             style="background:${cat?.color || '#FF7D0A'}">
-          ${cat?.icon || '📍'}
+        <div style="width:36px;height:36px;border-radius:50%;background:${cat?.color || '#FF7D0A'};border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
         </div>`;
 
       const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
@@ -94,7 +93,7 @@ export default function MapPage() {
         <select value={category} onChange={(e) => setCategory(e.target.value)}
           className="bg-surface-50 dark:bg-dark-card2 border border-surface-200 dark:border-dark-border rounded-xl px-3 py-2 text-sm text-surface-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
           <option value="">All</option>
-          {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>)}
+          {CATEGORIES.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
         </select>
       </div>
 

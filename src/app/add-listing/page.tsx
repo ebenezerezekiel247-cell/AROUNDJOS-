@@ -8,7 +8,7 @@ import { createListing } from '@/services/listings';
 import { useUpload } from '@/hooks/useUpload';
 import { CATEGORIES } from '@/services/categories';
 import { JOS_AREAS } from '@/types';
-import { Button, Input, Textarea, Select } from '@/components/ui';
+import { Button, Input, Textarea, Select, RawCategoryIcon } from '@/components/ui';
 import { cn } from '@/utils';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
@@ -132,7 +132,7 @@ export default function AddListingPage() {
                   <button key={cat.slug} type="button" onClick={() => set('category_slug', cat.slug)}
                     className={cn('flex items-center gap-2 p-3 rounded-2xl border text-xs font-medium transition-all text-left',
                       form.category_slug === cat.slug ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20 text-brand-600' : 'border-surface-200 dark:border-dark-border hover:border-brand-300 text-surface-600 dark:text-surface-300')}>
-                    <span>{cat.icon}</span><span className="truncate">{cat.name}</span>
+                    <RawCategoryIcon name={cat.icon} color={form.category_slug === cat.slug ? cat.color : '#6B7280'} size={16} /><span className="truncate">{cat.name}</span>
                   </button>
                 ))}
               </div>

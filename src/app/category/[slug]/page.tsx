@@ -5,7 +5,7 @@ import { ChevronRight, ArrowRight } from 'lucide-react';
 import { getCategoryBySlug, CATEGORIES } from '@/services/categories';
 import { getListingsByCategory } from '@/services/listings';
 import { ListingCard } from '@/components/listings/ListingCard';
-import { SectionHeader, EmptyState, Badge } from '@/components/ui';
+import { SectionHeader, EmptyState, Badge } from '@/components/ui, CategoryIcon, RawCategoryIcon }  from '@/components/ui';
 import { Button } from '@/components/ui';
 
 interface Props { params: Promise<{ slug: string }> }
@@ -51,7 +51,7 @@ export default async function CategoryPage({ params }: Props) {
               className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl shadow-lg flex-shrink-0"
               style={{ backgroundColor: `${category.color}25` }}
             >
-              {category.icon}
+              <CategoryIcon name={category.icon} color={category.color} size={24} />
             </div>
             <div>
               <h1 className="font-display font-black text-2xl sm:text-3xl text-surface-900 dark:text-white">
@@ -89,7 +89,7 @@ export default async function CategoryPage({ params }: Props) {
       <div className="container-app section">
         {listings.length === 0 ? (
           <EmptyState
-            icon={category.icon}
+            icon="📂"
             title={`No ${category.name} yet`}
             message="Be the first to add a business in this category!"
             action={
@@ -125,7 +125,7 @@ export default async function CategoryPage({ params }: Props) {
               href={`/category/${cat.slug}`}
               className="flex items-center gap-2 bg-white dark:bg-dark-card border border-surface-100 dark:border-dark-border px-4 py-2 rounded-2xl text-sm text-surface-700 dark:text-surface-300 hover:border-brand-300 hover:text-brand-500 transition-colors"
             >
-              {cat.icon} {cat.name}
+              <RawCategoryIcon name={cat.icon} color={cat.color} size={14} /> {cat.name}
             </Link>
           ))}
         </div>

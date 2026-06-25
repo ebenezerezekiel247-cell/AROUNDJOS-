@@ -8,7 +8,7 @@ import {
 import { getListingBySlug, incrementViewCount } from '@/services/listings';
 import { getReviewsByListing } from '@/services/reviews';
 import { getCategoryBySlug } from '@/services/categories';
-import { Badge, StarRating, Divider } from '@/components/ui';
+import { Badge, StarRating, Divider, RawCategoryIcon } from '@/components/ui';
 import { ReviewSection, ClaimBanner } from '@/components/reviews/ReviewSection';
 import { ListingImageGallery } from '@/components/listings/ListingImageGallery';
 import { getWhatsAppLink, getPhoneLink, formatNumber, getPriceLabel, isOpenNow } from '@/utils';
@@ -82,7 +82,7 @@ export default async function ListingPage({ params }: Props) {
                 {listing.claimed   && <Badge variant="info">🔑 Owner Managed</Badge>}
                 {category && (
                   <Link href={`/category/${category.slug}`}>
-                    <Badge>{category.icon} {category.name}</Badge>
+                    <Badge><RawCategoryIcon name={category.icon} color={category.color} size={12} /> {category.name}</Badge>
                   </Link>
                 )}
               </div>

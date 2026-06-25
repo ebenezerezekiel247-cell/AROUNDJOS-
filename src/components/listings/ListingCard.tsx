@@ -207,6 +207,7 @@ function CompactListingCard({ listing, className }: { listing: Listing; classNam
 // ─── Category Card ────────────────────────────────────────────────────────────
 
 import type { Category } from '@/types';
+import { CategoryIcon } from '@/components/ui';
 
 interface CategoryCardProps {
   category:  Category;
@@ -225,11 +226,9 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
       )}
     >
       <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
         style={{ backgroundColor: `${category.color}20` }}
-      >
-        {category.icon}
-      </div>
+    >
+      <CategoryIcon name={category.icon} color={category.color} size={22} />
       <span className="text-xs font-semibold text-surface-700 dark:text-surface-300 text-center leading-tight">
         {category.name}
       </span>

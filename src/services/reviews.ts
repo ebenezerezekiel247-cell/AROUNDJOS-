@@ -1,9 +1,8 @@
 import { getSupabaseClient } from '@/lib/supabase/client';
 import type { DbReview } from '@/types/database';
 
-const db = () => getSupabaseClient();
+const db = () => getSupabaseClient() as any;
 
-// ─── Public Type (camelCase — matches what UI components expect) ─────────────
 export interface Review {
   id: string;
   listingId: string;
@@ -43,7 +42,6 @@ function toReview(row: DbReview): Review {
   };
 }
 
-// ─── Create Review ────────────────────────────────────────────────────────────
 export async function createReview(
   listingId: string,
   authorId: string,
@@ -53,23 +51,21 @@ export async function createReview(
   const { data: review, error } = await db()
     .from('reviews')
     .insert({
-      listing_id: listingId,
-      author_id: authorId,
+      listing_id:  listingId,
+      author_id:   authorId,
       author_name: 'Anonymous Visitor',
-      rating: data.rating,
-      body: data.body,
-      title: data.title || null,
+      rating:      data.rating,
+      body:        data.body,
+      title:       data.title || null,
       images,
-      status: 'active',
+      status:      'active',
     })
     .select('id')
     .single();
-
   if (error) throw error;
   return review.id;
 }
 
-// ─── Get Reviews for Listing ──────────────────────────────────────────────────
 export async function getReviewsByListing(listingId: string, limit = 20): Promise<Review[]> {
   const { data, error } = await db()
     .from('reviews').select('*').eq('listing_id', listingId).eq('status', 'active')
@@ -78,21 +74,18 @@ export async function getReviewsByListing(listingId: string, limit = 20): Promis
   return (data || []).map(toReview);
 }
 
-// ─── Mark Helpful ─────────────────────────────────────────────────────────────
 export async function markReviewHelpful(reviewId: string): Promise<void> {
   const { data: r } = await db().from('reviews').select('helpful').eq('id', reviewId).single();
   if (!r) return;
   await db().from('reviews').update({ helpful: (r.helpful || 0) + 1 }).eq('id', reviewId);
 }
 
-// ─── Report Review ────────────────────────────────────────────────────────────
 export async function reportReview(reviewId: string, userId: string): Promise<void> {
   await db().from('reports').insert({ target_type: 'review', target_id: reviewId, reported_by: userId, reason: 'inappropriate' });
   const { data: r } = await db().from('reviews').select('report_count').eq('id', reviewId).single();
   if (r) await db().from('reviews').update({ report_count: (r.report_count || 0) + 1, reported: true }).eq('id', reviewId);
 }
 
-// ─── Add Owner Reply ──────────────────────────────────────────────────────────
 export async function addOwnerReply(reviewId: string, body: string): Promise<void> {
   const { error } = await db()
     .from('reviews')
@@ -101,7 +94,6 @@ export async function addOwnerReply(reviewId: string, body: string): Promise<voi
   if (error) throw error;
 }
 
-// ─── Admin ────────────────────────────────────────────────────────────────────
 export async function getAdminReviews(status?: string): Promise<Review[]> {
   let query = db().from('reviews').select('*').order('created_at', { ascending: false }).limit(100);
   if (status) query = query.eq('status', status);

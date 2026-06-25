@@ -389,3 +389,4 @@ export function Select({ label, error, options, placeholder, className, ...props
     </div>
   );
 }
+export { CategoryIcon, RawCategoryIcon } from './CategoryIcon';

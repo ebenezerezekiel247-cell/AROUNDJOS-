@@ -133,7 +133,7 @@ export default function SearchPage() {
                 >
                   <option value="">All Categories</option>
                   {CATEGORIES.map((c) => (
-                    <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
+                    <option key={c.slug} value={c.slug}>{c.name}</option>
                   ))}
                 </select>
               </div>
