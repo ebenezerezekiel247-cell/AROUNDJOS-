@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ChevronRight, ArrowRight } from 'lucide-react';
 import { getCategoryBySlug, CATEGORIES } from '@/services/categories';
 import { getListingsByCategory } from '@/services/listings';
-import { ListingCard } from '@/components/listings/ListingCard';
-import { SectionHeader, EmptyState, Badge } from '@/components/ui, CategoryIcon, RawCategoryIcon }  from '@/components/ui';
+import { ListingCard, CategoryCard } from '@/components/listings/ListingCard';
+import { SectionHeader, EmptyState, Badge, CategoryIcon, RawCategoryIcon } from '@/components/ui';
 import { Button } from '@/components/ui';
 
 interface Props { params: Promise<{ slug: string }> }
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!cat) return { title: 'Category Not Found' };
   return {
     title:       `${cat.name} in Jos — AroundJos`,
-    description: cat.description,
+    description: cat.description || `Discover the best ${cat.name} in Jos, Plateau State.`,
   };
 }
 
@@ -33,51 +33,33 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <div className="page-top">
-      {/* ─── Header ───────────────────────────────────────────────── */}
-      <div
-        className="relative py-14 overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${category.color}22 0%, ${category.color}08 100%)` }}
-      >
+      {/* Header */}
+      <div className="py-14" style={{ background: `linear-gradient(135deg, ${category.color}15, ${category.color}05)` }}>
         <div className="container-app">
-          {/* Breadcrumb */}
           <nav className="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400 mb-6">
             <Link href="/" className="hover:text-brand-500">Home</Link>
             <ChevronRight className="w-3 h-3" />
             <span className="text-surface-700 dark:text-white">{category.name}</span>
           </nav>
-
           <div className="flex items-center gap-4">
-            <div
-              className="w-16 h-16 rounded-3xl flex items-center justify-center text-3xl shadow-lg flex-shrink-0"
-              style={{ backgroundColor: `${category.color}25` }}
-            >
-              <CategoryIcon name={category.icon} color={category.color} size={24} />
-            </div>
+            <CategoryIcon name={category.icon} color={category.color} size={28} />
             <div>
-              <h1 className="font-display font-black text-2xl sm:text-3xl text-surface-900 dark:text-white">
-                {category.name}
-              </h1>
-              <p className="text-surface-500 dark:text-surface-400 text-sm mt-1">{category.description}</p>
-              <p className="text-xs text-surface-400 mt-1">{listings.length} listings in Jos</p>
+              <h1 className="font-display font-black text-2xl sm:text-3xl text-surface-900 dark:text-white">{category.name}</h1>
+              <p className="text-surface-500 dark:text-surface-400 text-sm mt-1">
+                {category.description} · {listings.length} {listings.length === 1 ? 'business' : 'businesses'} in Jos
+              </p>
             </div>
           </div>
 
-          {/* Subcategory chips */}
+          {/* Subcategory pills */}
           {category.subcategories.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-6">
-              <Link
-                href={`/category/${category.slug}`}
-                className="bg-white dark:bg-dark-card border-2 border-brand-500 text-brand-500 text-xs font-bold px-4 py-1.5 rounded-full"
-              >
-                All
+              <Link href={`/category/${category.slug}`}>
+                <Badge variant="brand">All</Badge>
               </Link>
               {category.subcategories.map((sub) => (
-                <Link
-                  key={sub.slug}
-                  href={`/category/${category.slug}?sub=${sub.slug}`}
-                  className="bg-white dark:bg-dark-card border border-surface-200 dark:border-dark-border text-surface-600 dark:text-surface-300 hover:border-brand-400 hover:text-brand-500 text-xs font-medium px-4 py-1.5 rounded-full transition-colors"
-                >
-                  {sub.name}
+                <Link key={sub.slug} href={`/category/${category.slug}?sub=${sub.slug}`}>
+                  <Badge>{sub.name}</Badge>
                 </Link>
               ))}
             </div>
@@ -85,13 +67,13 @@ export default async function CategoryPage({ params }: Props) {
         </div>
       </div>
 
-      {/* ─── Listings ─────────────────────────────────────────────── */}
+      {/* Listings */}
       <div className="container-app section">
         {listings.length === 0 ? (
           <EmptyState
             icon="📂"
-            title={`No ${category.name} yet`}
-            message="Be the first to add a business in this category!"
+            title={`No ${category.name} listed yet`}
+            message={`Be the first to add a ${category.name.toLowerCase()} in Jos!`}
             action={
               <Link href="/add-listing">
                 <Button>Add a Business</Button>
@@ -100,14 +82,15 @@ export default async function CategoryPage({ params }: Props) {
           />
         ) : (
           <>
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-surface-500 dark:text-surface-400">
-                Showing {listings.length} {category.name.toLowerCase()} in Jos
-              </p>
-              <Link href={`/search?category=${category.slug}`} className="text-sm text-brand-500 font-semibold flex items-center gap-1">
-                Filter & Sort <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            <SectionHeader
+              title={`${category.name} in Jos`}
+              subtitle={`${listings.length} businesses found`}
+              action={
+                <Link href={`/search?category=${category.slug}`} className="text-sm text-brand-500 font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                  Filter <ArrowRight className="w-4 h-4" />
+                </Link>
+              }
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
@@ -115,18 +98,23 @@ export default async function CategoryPage({ params }: Props) {
         )}
       </div>
 
-      {/* ─── Other Categories ─────────────────────────────────────── */}
+      {/* Add Business CTA */}
       <div className="container-app pb-10">
-        <SectionHeader title="Other Categories" />
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.filter((c) => c.slug !== slug).map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
-              className="flex items-center gap-2 bg-white dark:bg-dark-card border border-surface-100 dark:border-dark-border px-4 py-2 rounded-2xl text-sm text-surface-700 dark:text-surface-300 hover:border-brand-300 hover:text-brand-500 transition-colors"
-            >
-              <RawCategoryIcon name={cat.icon} color={cat.color} size={14} /> {cat.name}
-            </Link>
+        <div className="rounded-2xl p-6 text-center" style={{ background: `${category.color}10`, border: `1px solid ${category.color}30` }}>
+          <p className="font-bold text-surface-900 dark:text-white mb-1">Own a {category.name} in Jos?</p>
+          <p className="text-sm text-surface-500 dark:text-surface-400 mb-4">List it free and get discovered by thousands.</p>
+          <Link href="/add-listing">
+            <Button>Add Your Business — Free</Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Other categories */}
+      <div className="container-app pb-10">
+        <h2 className="font-display font-bold text-lg text-surface-900 dark:text-white mb-4">Other Categories</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+          {CATEGORIES.filter((c) => c.slug !== slug).slice(0, 6).map((cat) => (
+            <CategoryCard key={cat.slug} category={cat} />
           ))}
         </div>
       </div>
